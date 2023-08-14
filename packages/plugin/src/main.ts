@@ -5,7 +5,7 @@ import { getStore, setStore } from "./store";
 /**
  * handler
  */
-ipcMain.handle(channels.start, async () => {
+ipcMain.handle(channels.execute, async () => {
   const { appOptions, plugin } = getStore();
   console.log(appOptions, plugin);
   if (!appOptions.isSecure) {

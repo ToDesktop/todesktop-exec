@@ -1,7 +1,7 @@
 export const namespace = (str: string) => `exec:${str}`;
 
 export const channels = {
-  start: namespace("start"),
+  execute: namespace("execute"),
 };
 
 export interface PluginContext {
@@ -33,15 +33,4 @@ export interface PluginContext {
     };
   };
   appOptions: { isSecure: boolean };
-}
-
-declare global {
-  interface Window {
-    todesktop: {
-      fs: {
-        // this is currently injected by TD Builder.
-        meta: PluginContext;
-      };
-    };
-  }
 }
