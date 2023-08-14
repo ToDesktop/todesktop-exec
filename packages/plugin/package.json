@@ -42,33 +42,21 @@
         "name": "Mac executable",
         "description": "Reference to the mac executable file.",
         "type": "file-selector",
-        "spec": {
-          "validator": {
-            "type": "string"
-          }
-        }
+        "spec": {}
       },
       {
         "id": "windowsExecutable",
         "name": "Windows executable",
         "description": "Reference to the windows executable file.",
         "type": "file-selector",
-        "spec": {
-          "validator": {
-            "type": "string"
-          }
-        }
+        "spec": {}
       },
       {
         "id": "linuxExecutable",
         "name": "Linux executable",
         "description": "Reference to the linux executable file.",
         "type": "file-selector",
-        "spec": {
-          "validator": {
-            "type": "string"
-          }
-        }
+        "spec": {}
       }
     ]
   }
