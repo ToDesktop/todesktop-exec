@@ -32,5 +32,12 @@ export interface PluginContext {
       ];
     };
   };
-  appOptions: { isSecure: boolean };
+  appOptions: {
+    isSecure: boolean;
+    fileAssetDetailsList?: {
+      url: string;
+      relativeLocalPath: string;
+      name: string;
+    }[];
+  };
 }
