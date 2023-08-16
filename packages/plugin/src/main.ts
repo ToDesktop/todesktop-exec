@@ -17,6 +17,8 @@ const execute = async (
     (asset) => asset.url === url
   );
 
+  console.log("plugin asset details", url, appOptions.fileAssetDetailsList);
+
   if (!asset) {
     throw new Error("'exec' plugin couldn't find local executable.");
   }
@@ -32,6 +34,7 @@ const execute = async (
  * handler
  */
 ipcMain.handle(channels.execute, async () => {
+  console.log("plugin executed");
   const { appOptions, plugin } = getStore();
   if (!appOptions.isSecure) {
     throw new Error(
