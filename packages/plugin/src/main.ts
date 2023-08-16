@@ -1,5 +1,5 @@
 import path from "path";
-import { packageDirectory } from "pkg-dir";
+import packageDir from "pkg-dir";
 import os from "os";
 import { ipcMain } from "electron";
 import { PluginContext, channels } from "./shared";
@@ -24,10 +24,7 @@ const execute = async (
   console.log("asset", asset);
   console.log("current path", path.join(__dirname, "../"));
 
-  console.log(
-    "packageDir",
-    packageDirectory({ cwd: path.join(__dirname, "../") })
-  );
+  console.log("packageDir", await packageDir(path.join(__dirname, "../")));
   console.log("maybe path", path.join(__dirname, asset.relativeLocalPath));
 };
 

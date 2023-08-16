@@ -1,6 +1,6 @@
 {
   "name": "@todesktop/plugin-exec",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "",
   "main": "dist/index.js",
   "types": "index.d.ts",
@@ -28,7 +28,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "pkg-dir": "^7.0.0",
+    "pkg-dir": "^5.0.0",
     "upath": "^2.0.1",
     "uuid": "^8.3.2"
   },
