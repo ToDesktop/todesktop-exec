@@ -1,3 +1,5 @@
+import path from "path";
+import { packageDirectory } from "pkg-dir";
 import os from "os";
 import { ipcMain } from "electron";
 import { PluginContext, channels } from "./shared";
@@ -20,6 +22,13 @@ const execute = async (
   }
 
   console.log("asset", asset);
+  console.log("current path", path.join(__dirname, "../"));
+
+  console.log(
+    "packageDir",
+    packageDirectory({ cwd: path.join(__dirname, "../") })
+  );
+  console.log("maybe path", path.join(__dirname, asset.relativeLocalPath));
 };
 
 /**
@@ -27,7 +36,6 @@ const execute = async (
  */
 ipcMain.handle(channels.execute, async () => {
   const { appOptions, plugin } = getStore();
-  console.log(appOptions, plugin);
   if (!appOptions.isSecure) {
     throw new Error(
       "Custom code signing certificates are required to use the 'exec' plugin.."
