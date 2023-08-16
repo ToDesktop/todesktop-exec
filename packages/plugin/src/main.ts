@@ -1,5 +1,4 @@
 import path from "path";
-import packageDir from "pkg-dir";
 import os from "os";
 import { ipcMain } from "electron";
 import { PluginContext, channels } from "./shared";
@@ -17,17 +16,14 @@ const execute = async (
     (asset) => asset.url === url
   );
 
-  console.log("plugin asset details", url, appOptions.fileAssetDetailsList);
-
   if (!asset) {
     throw new Error("'exec' plugin couldn't find local executable.");
   }
 
-  console.log("asset", asset);
-  console.log("current path", path.join(__dirname, "../"));
-
-  console.log("packageDir", await packageDir(path.join(__dirname, "../")));
-  console.log("maybe path", path.join(__dirname, asset.relativeLocalPath));
+  console.log(
+    "files path",
+    path.join(appOptions.localContext.appDir, asset.relativeLocalPath)
+  );
 };
 
 /**

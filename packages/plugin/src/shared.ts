@@ -33,6 +33,7 @@ export interface PluginContext {
     };
   };
   appOptions: {
+    localContext: { appDir: string };
     isSecure: boolean;
     fileAssetDetailsList?: {
       url: string;
