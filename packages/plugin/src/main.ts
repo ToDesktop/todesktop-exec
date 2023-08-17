@@ -43,7 +43,7 @@ const execute = async (
     asset.relativeLocalPath
   );
 
-  console.log("todo, config should support custom flags");
+  console.log("todo, config should support custom flags", executablePath);
   await fs.chmod(executablePath, 0o755);
   const exectuableProcess = spawn(executablePath, ["--inspect"]);
   exectuableProcess.stdout.once("data", () => {
