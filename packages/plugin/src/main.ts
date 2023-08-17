@@ -1,34 +1,11 @@
-import path from "path";
+import { spawn } from "child_process";
+import { BrowserWindow, ipcMain } from "electron";
+import fs from "fs/promises";
 import os from "os";
-import { ipcMain } from "electron";
-import { PluginContext, channels } from "./shared";
+import path from "path";
+import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
 
-/**
- * utilities
- */
-const platform = os.platform();
-const execute = async (
-  url: string,
-  appOptions: PluginContext["appOptions"]
-) => {
-  const asset = appOptions.fileAssetDetailsList?.find(
-    (asset) => asset.url === url
-  );
-
-  if (!asset) {
-    throw new Error("'exec' plugin couldn't find local executable.");
-  }
-
-  console.log(
-    "files path",
-    path.join(appOptions.localContext.appDir, asset.relativeLocalPath)
-  );
-};
-
-/**
- * handler
- */
 ipcMain.handle(channels.execute, async () => {
   console.log("plugin executed");
   const { appOptions, plugin } = getStore();
@@ -47,6 +24,66 @@ ipcMain.handle(channels.execute, async () => {
     await execute(linux.spec.value, appOptions);
   }
 });
+
+const platform = os.platform();
+const execute = async (
+  url: string,
+  appOptions: PluginContext["appOptions"]
+) => {
+  const asset = appOptions.fileAssetDetailsList?.find(
+    (asset) => asset.url === url
+  );
+
+  if (!asset) {
+    throw new Error("'exec' plugin couldn't find local executable.");
+  }
+
+  const executablePath = path.join(
+    appOptions.localContext.appDir,
+    asset.relativeLocalPath
+  );
+
+  console.log("todo, config should support custom flags");
+  await fs.chmod(executablePath, 0o755);
+  const exectuableProcess = spawn(executablePath, ["--inspect"]);
+  exectuableProcess.stdout.once("data", () => {
+    console.log("process has started");
+  });
+
+  exectuableProcess.stdout.on("data", (data) => {
+    console.log("stdout:", data.toString("utf8"));
+  });
+
+  exectuableProcess.stderr?.on("data", (data) => {
+    console.log("stderr:", data.toString("utf8"));
+  });
+
+  exectuableProcess.once("exit", (code, signal) => {
+    if (code) {
+      console.error("Child exited with code", code);
+    } else if (signal) {
+      console.error("Child was killed with signal", signal);
+    } else {
+      console.log("Child exited okay");
+    }
+  });
+};
+
+function broadcast(data: IpcMessage) {
+  const windows = BrowserWindow.getAllWindows();
+
+  return windows.map((window) => {
+    window.webContents.send(channels.message, data);
+
+    const views = window.getBrowserViews();
+    const viewsIds = views.map((view) => {
+      view.webContents.send(channels.message, data);
+      return view.webContents.id;
+    });
+
+    return { windowId: window.id, viewsIds };
+  });
+}
 
 /**
  * entrypoint

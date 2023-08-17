@@ -2,7 +2,19 @@ export const namespace = (str: string) => `exec:${str}`;
 
 export const channels = {
   execute: namespace("execute"),
+  message: namespace("message"),
 };
+
+export type IpcMessage = {
+  type: "data";
+  data: unknown;
+};
+
+export type Subscribe = <T extends IpcMessage>(
+  onMessage: (message: T) => void
+) => () => void;
+
+export type Unsubscribe = (subscriberId: number) => void;
 
 export interface PluginContext {
   plugin: {
