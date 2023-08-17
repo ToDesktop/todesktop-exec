@@ -47,29 +47,30 @@ const execute = async (
   await fs.chmod(executablePath, 0o755);
   const exectuableProcess = spawn(executablePath, ["--inspect"]);
   exectuableProcess.stdout.once("data", () => {
-    console.log("process has started");
+    publish({ type: "output", data: "process started" });
   });
 
   exectuableProcess.stdout.on("data", (data) => {
-    console.log("stdout:", data.toString("utf8"));
+    publish({ type: "stdout", data: data.toString("utf8") });
   });
 
   exectuableProcess.stderr?.on("data", (data) => {
-    console.log("stderr:", data.toString("utf8"));
+    publish({ type: "stderr", data: data.toString("utf8") });
   });
 
   exectuableProcess.once("exit", (code, signal) => {
     if (code) {
-      console.error("Child exited with code", code);
+      publish({ type: "error", data: `process exited with code ${code}` });
     } else if (signal) {
       console.error("Child was killed with signal", signal);
+      publish({ type: "error", data: `process killed with signal ${signal}` });
     } else {
-      console.log("Child exited okay");
+      publish({ type: "output", data: "process exited okay" });
     }
   });
 };
 
-function broadcast(data: IpcMessage) {
+function publish(data: IpcMessage) {
   const windows = BrowserWindow.getAllWindows();
 
   return windows.map((window) => {
