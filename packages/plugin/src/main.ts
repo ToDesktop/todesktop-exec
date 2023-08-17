@@ -7,7 +7,7 @@ import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
 
 ipcMain.handle(channels.execute, async () => {
-  console.log("plugin executed");
+  publish({ type: "output", data: `Plugin executed` });
   const { appOptions, plugin } = getStore();
   if (!appOptions.isSecure) {
     throw new Error(
@@ -34,6 +34,8 @@ const execute = async (
     (asset) => asset.url === url
   );
 
+  publish({ type: "output", data: `Found asset: ${!!asset}` });
+
   if (!asset) {
     throw new Error("'exec' plugin couldn't find local executable.");
   }
@@ -43,7 +45,8 @@ const execute = async (
     asset.relativeLocalPath
   );
 
-  console.log("todo, config should support custom flags", executablePath);
+  publish({ type: "output", data: `Executable path: ${executablePath}` });
+
   await fs.chmod(executablePath, 0o755);
   const exectuableProcess = spawn(executablePath, ["--inspect"]);
   exectuableProcess.stdout.once("data", () => {
