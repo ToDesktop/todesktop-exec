@@ -5,10 +5,7 @@ export const channels = {
   message: namespace("message"),
 };
 
-export type IpcMessage = {
-  type: "data";
-  data: unknown;
-};
+export type IpcMessage = { type: "stdout" | "stderr"; data: string };
 
 export type Subscribe = <T extends IpcMessage>(
   onMessage: (message: T) => void

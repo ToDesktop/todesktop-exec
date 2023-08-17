@@ -37,6 +37,7 @@ declare global {
     todesktop: {
       exec: {
         execute: () => Promise<void>;
+        subscribe: Subscribe;
       };
     };
   }
