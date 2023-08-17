@@ -9,14 +9,12 @@ export const subscribe: Subscribe = (onMessage) => {
     e: IpcRendererEvent,
     data: Parameters<typeof onMessage>[0]
   ) => {
-    console.log(`[event received]`, data);
     return onMessage(data);
   };
 
   ipcRenderer.on(channels.message, handler);
   activeListeners.set(subscriberId, handler);
 
-  console.log(`[${subscriberId} subscribed]`);
   return () => unsubscribe(subscriberId);
 };
 
@@ -25,7 +23,6 @@ const unsubscribe: Unsubscribe = (subscriberId) => {
 
   ipcRenderer.removeListener(channels.message, handler);
   activeListeners.delete(subscriberId);
-  console.log(`[${subscriberId} unsubscribed]`);
 };
 
 let idCount = 0;
