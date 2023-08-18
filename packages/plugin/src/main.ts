@@ -8,11 +8,11 @@ import { getStore, setStore } from "./store";
 import { app } from "electron";
 
 ipcMain.handle(channels.execute, async () => {
-  publish({ type: "output", data: `Plugin executed` });
+  publish({ type: "debug", data: `Executing @todesktop/exec` });
   const { appOptions, plugin } = getStore();
   if (!appOptions.isSecure) {
     throw new Error(
-      "Custom code signing certificates are required to use the 'exec' plugin.."
+      "Custom code signing certificates are required to use the 'exec' plugin."
     );
   }
 
@@ -23,6 +23,8 @@ ipcMain.handle(channels.execute, async () => {
     await execute(windows.spec.value, appOptions);
   } else if (platform === "linux" && linux.spec.value) {
     await execute(linux.spec.value, appOptions);
+  } else {
+    publish({ type: "debug", data: `Skipped platform execution` });
   }
 });
 
@@ -35,20 +37,18 @@ const execute = async (
     (asset) => asset.url === url
   );
 
-  publish({ type: "output", data: `Found asset: ${!!asset}` });
-
   if (!asset) {
-    throw new Error("'exec' plugin couldn't find local executable.");
+    throw new Error("The 'exec' plugin couldn't find local executable.");
   }
-
-  const executablePath = await getTempExecutablePath(asset.relativeLocalPath);
-
-  publish({ type: "output", data: `Executable path: ${executablePath}` });
-
-  const exectuableProcess = spawn(executablePath, ["--inspect"]);
-  exectuableProcess.stdout.once("data", () => {
-    publish({ type: "output", data: "process started" });
+  publish({
+    type: "debug",
+    data: `Retrieved reference to asset ${asset.name}`,
   });
+
+  const executablePath = await getExecutablePath(asset.relativeLocalPath);
+
+  publish({ type: "debug", data: `Spwaning process at ${executablePath}` });
+  const exectuableProcess = spawn(executablePath, []);
 
   exectuableProcess.stdout.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
@@ -60,31 +60,25 @@ const execute = async (
 
   exectuableProcess.once("exit", (code, signal) => {
     if (code) {
-      publish({ type: "error", data: `process exited with code ${code}` });
+      publish({ type: "debug", data: `Process exited with code ${code}` });
     } else if (signal) {
-      console.error("Child was killed with signal", signal);
-      publish({ type: "error", data: `process killed with signal ${signal}` });
+      publish({ type: "debug", data: `Process killed with signal ${signal}` });
     } else {
-      publish({ type: "output", data: "process exited okay" });
+      publish({ type: "debug", data: "Process exited okay" });
     }
   });
 };
 
-async function getTempExecutablePath(localPath: string) {
+async function getExecutablePath(localPath: string) {
   // Define the path to the executable inside the ASAR archive
   const asarPath = upath.join(app.getAppPath(), localPath);
-  publish({ type: "output", data: `Asar path: ${asarPath}` });
+  publish({ type: "debug", data: `Extracting asset from ${asarPath}` });
 
   // Define a path to copy the executable outside of the ASAR
   const tempExecutablePath = upath.join(app.getPath("temp"), localPath);
-  publish({
-    type: "output",
-    data: `Temp executable path: ${tempExecutablePath}`,
-  });
 
   // Read the file from the ASAR archive
   const data = await fs.readFile(asarPath);
-  publish({ type: "output", data: `Read asar file` });
 
   // Write the file outside of the ASAR archive
   const parentDir = getParentDirectory(tempExecutablePath);
@@ -93,14 +87,13 @@ async function getTempExecutablePath(localPath: string) {
   } catch {
     await fs.mkdir(parentDir, { recursive: true });
   }
-  publish({ type: "output", data: `Wrote parent dir: ${parentDir}` });
 
   await fs.writeFile(tempExecutablePath, data);
-  publish({ type: "output", data: `Wrote asar file` });
+  publish({ type: "debug", data: `Writing asset to ${tempExecutablePath}` });
 
   // Make the file executable (This is especially needed for non-Windows platforms)
   await fs.chmod(tempExecutablePath, 0o755);
-  publish({ type: "output", data: `Updated permissions of asar file` });
+  publish({ type: "debug", data: `Updated asset execution permissions` });
 
   return tempExecutablePath;
 }

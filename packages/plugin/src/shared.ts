@@ -6,7 +6,7 @@ export const channels = {
 };
 
 export type IpcMessage = {
-  type: "output" | "error" | "stdout" | "stderr";
+  type: "debug" | "stdout" | "stderr";
   data: string;
 };
 
