@@ -1,6 +1,6 @@
 {
   "name": "@todesktop/plugin-exec",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "",
   "main": "dist/index.js",
   "types": "index.d.ts",
@@ -55,5 +55,8 @@
         "spec": {}
       }
     ]
+  },
+  "dependencies": {
+    "upath": "^2.0.1"
   }
 }

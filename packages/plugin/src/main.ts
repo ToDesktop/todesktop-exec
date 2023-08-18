@@ -2,9 +2,10 @@ import { spawn } from "child_process";
 import { BrowserWindow, ipcMain } from "electron";
 import fs from "fs/promises";
 import os from "os";
-import path from "path";
+import upath from "upath";
 import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
+import { app } from "electron";
 
 ipcMain.handle(channels.execute, async () => {
   publish({ type: "output", data: `Plugin executed` });
@@ -40,14 +41,10 @@ const execute = async (
     throw new Error("'exec' plugin couldn't find local executable.");
   }
 
-  const executablePath = path.join(
-    appOptions.localContext.appDir,
-    asset.relativeLocalPath
-  );
+  const executablePath = await getTempExecutablePath(asset.relativeLocalPath);
 
   publish({ type: "output", data: `Executable path: ${executablePath}` });
 
-  await fs.chmod(executablePath, 0o755);
   const exectuableProcess = spawn(executablePath, ["--inspect"]);
   exectuableProcess.stdout.once("data", () => {
     publish({ type: "output", data: "process started" });
@@ -72,6 +69,51 @@ const execute = async (
     }
   });
 };
+
+async function getTempExecutablePath(localPath: string) {
+  // Define the path to the executable inside the ASAR archive
+  const asarPath = upath.join(app.getAppPath(), localPath);
+  publish({ type: "output", data: `Asar path: ${asarPath}` });
+
+  // Define a path to copy the executable outside of the ASAR
+  const tempExecutablePath = upath.join(app.getPath("temp"), localPath);
+  publish({
+    type: "output",
+    data: `Temp executable path: ${tempExecutablePath}`,
+  });
+
+  // Read the file from the ASAR archive
+  const data = await fs.readFile(asarPath);
+  publish({ type: "output", data: `Read asar file` });
+
+  // Write the file outside of the ASAR archive
+  const parentDir = getParentDirectory(tempExecutablePath);
+  try {
+    await fs.stat(parentDir);
+  } catch {
+    await fs.mkdir(parentDir, { recursive: true });
+  }
+  publish({ type: "output", data: `Wrote parent dir: ${parentDir}` });
+
+  await fs.writeFile(tempExecutablePath, data);
+  publish({ type: "output", data: `Wrote asar file` });
+
+  // Make the file executable (This is especially needed for non-Windows platforms)
+  await fs.chmod(tempExecutablePath, 0o755);
+  publish({ type: "output", data: `Updated permissions of asar file` });
+
+  return tempExecutablePath;
+}
+
+function getParentDirectory(pathname: string) {
+  const parts = pathname.split(upath.posix.sep);
+
+  // Remove the last part (the executable file)
+  parts.pop();
+
+  // Join the remaining parts to get the parent directory
+  return parts.join(upath.posix.sep);
+}
 
 function publish(data: IpcMessage) {
   const windows = BrowserWindow.getAllWindows();
