@@ -48,8 +48,8 @@ const execute = async (
 
   const executablePath = await getExecutablePath(asset.relativeLocalPath);
 
-  publish({ type: "debug", data: `Spwaning process at ${executablePath}` });
-  const exectuableProcess = spawn(executablePath, flags);
+  publish({ type: "debug", data: `Spawning process at ${executablePath}` });
+  const exectuableProcess = spawn(executablePath, []);
 
   exectuableProcess.stdout.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
