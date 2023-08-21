@@ -1,7 +1,8 @@
 import { IpcRendererEvent, ipcRenderer } from "electron";
-import { Subscribe, Unsubscribe, channels } from "./shared";
+import { Execute, Subscribe, Unsubscribe, channels } from "./shared";
 
-export const execute = () => ipcRenderer.invoke(channels.execute);
+export const execute: Execute = (...args) =>
+  ipcRenderer.invoke(channels.execute, ...args);
 
 export const subscribe: Subscribe = (onMessage) => {
   const subscriberId = idCount++;
@@ -33,7 +34,7 @@ declare global {
   interface Window {
     todesktop: {
       exec: {
-        execute: () => Promise<void>;
+        execute: Execute;
         subscribe: Subscribe;
       };
     };

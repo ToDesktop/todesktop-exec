@@ -7,7 +7,7 @@ import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
 import { app } from "electron";
 
-ipcMain.handle(channels.execute, async () => {
+ipcMain.handle(channels.execute, async (event, flags: string[]) => {
   publish({ type: "debug", data: `Executing @todesktop/exec` });
   const { appOptions, plugin } = getStore();
   if (!appOptions.isSecure) {
@@ -18,11 +18,11 @@ ipcMain.handle(channels.execute, async () => {
 
   const [mac, windows, linux] = plugin.todesktop.preferences;
   if (platform === "darwin" && mac.spec.value) {
-    await execute(mac.spec.value, appOptions);
+    await execute(mac.spec.value, appOptions, flags);
   } else if (platform === "win32" && windows.spec.value) {
-    await execute(windows.spec.value, appOptions);
+    await execute(windows.spec.value, appOptions, flags);
   } else if (platform === "linux" && linux.spec.value) {
-    await execute(linux.spec.value, appOptions);
+    await execute(linux.spec.value, appOptions, flags);
   } else {
     publish({ type: "debug", data: `Skipped platform execution` });
   }
@@ -31,7 +31,8 @@ ipcMain.handle(channels.execute, async () => {
 const platform = os.platform();
 const execute = async (
   url: string,
-  appOptions: PluginContext["appOptions"]
+  appOptions: PluginContext["appOptions"],
+  flags: string[] = []
 ) => {
   const asset = appOptions.fileAssetDetailsList?.find(
     (asset) => asset.url === url
@@ -48,7 +49,7 @@ const execute = async (
   const executablePath = await getExecutablePath(asset.relativeLocalPath);
 
   publish({ type: "debug", data: `Spwaning process at ${executablePath}` });
-  const exectuableProcess = spawn(executablePath, []);
+  const exectuableProcess = spawn(executablePath, flags);
 
   exectuableProcess.stdout.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });

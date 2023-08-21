@@ -15,6 +15,7 @@ export type Subscribe = <T extends IpcMessage>(
 ) => () => void;
 
 export type Unsubscribe = (subscriberId: number) => void;
+export type Execute = (flags: string[]) => Promise<void>;
 
 export interface PluginContext {
   plugin: {
