@@ -1,0 +1,5 @@
+node_modules
+dist
+generated
+.DS_STORE
+packages/**/README.md
