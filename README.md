@@ -1,23 +1,16 @@
-- [ToDesktop Exec](#todesktop-exec)
-  - [Installation](#installation)
-  - [Security](#security)
-  - [Usage](#usage)
-  - [Architecture](#architecture)
-  - [Development](#development)
-
 # ToDesktop Exec
 
-This package adds desktop app functionality for bundling and executing exec files.
+Bundle and execute exec files.
 
 ## Installation
 
 Install `@todesktop/client-exec` in your client-side application using
 
 ```sh
-$ npm install @todesktop/client-exec
+npm install @todesktop/client-exec
 ```
 
-Installation of the [plugin](https://www.npmjs.com/package/@todesktop/plugin-exec) package is also necessary. This can be done via the ToDesktop Builder interface.
+Installation of the [plugin](https://www.npmjs.com/package/@todesktop/plugin-exec) package is also necessary. Using the ToDesktop Builder interface, navigate to **Plugins.** Click on the **Explore** button for "File Exec" and install the package.
 
 ## Usage
 
