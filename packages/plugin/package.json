@@ -1,12 +1,13 @@
 {
   "name": "@todesktop/plugin-exec",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "",
   "main": "dist/index.js",
   "types": "index.d.ts",
   "scripts": {
     "build": "tsc --emitDeclarationOnly && ../../node_modules/.bin/dts-bundle-generator --no-check --inline-declare-global --external-inlines=fs -o ../client/src/generated/preload.d.ts ./src/preload.ts",
     "prepublishOnly": "npm run build",
+    "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
     "release:major": "npm version major && npm publish"
   },

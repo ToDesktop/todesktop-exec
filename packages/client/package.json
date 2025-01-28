@@ -1,11 +1,12 @@
 {
   "name": "@todesktop/client-exec",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf ./dist/* && tsc && copyfiles -u 1 \"src/**/*.d.ts\" dist && node exportDeclaredClasses",
     "prepublishOnly": "npm run build",
+    "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
     "release:major": "npm version major && npm publish"
   },
