@@ -49,9 +49,13 @@ const execute = async (
   const executablePath = await getExecutablePath(asset.relativeLocalPath);
 
   publish({ type: "debug", data: `Spawning process at ${executablePath}` });
-  const exectuableProcess = spawn(executablePath, []);
+  const executableOptions: Parameters<typeof spawn>[2] = {};
+  if (platform === "win32") {
+    executableOptions.shell = true;
+  }
+  const exectuableProcess = spawn(executablePath, [], executableOptions);
 
-  exectuableProcess.stdout.on("data", (data) => {
+  exectuableProcess.stdout?.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
   });
 
