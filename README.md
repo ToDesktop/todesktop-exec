@@ -34,10 +34,28 @@ subscribe((message) => {
 
 ### execute
 
-Calling `execute` will execute the file. Make sure to call `subscribe` before execution if you would like to see the execution logs.
+Calling `execute` will execute the file. Make sure to call `subscribe` before execution if you would like to see the execution logs. You can pass command-line arguments to your executable using an array of flags.
 
 ```js
 import { execute } from "@todesktop/client-exec";
 
+// Execute without flags
 await execute();
+
+// Execute with flags
+await execute(["--version"]);
+
+// Execute with multiple flags
+await execute(["--config", "path/to/config.json", "--verbose"]);
 ```
+
+## Changelog
+
+### 0.16.0
+
+- Added support for command-line arguments/flags in the `execute` function
+- Added debug logging for flag usage
+
+### 0.15.1
+
+- Fixed an issue where the executable would not spawn on Windows (https://github.com/nodejs/node/issues/52554)
