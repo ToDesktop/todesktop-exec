@@ -53,7 +53,8 @@ const execute = async (
   if (platform === "win32") {
     executableOptions.shell = true;
   }
-  const exectuableProcess = spawn(executablePath, [], executableOptions);
+  publish({ type: "debug", data: `Executing with flags: ${flags.join(" ")}` });
+  const exectuableProcess = spawn(executablePath, flags, executableOptions);
 
   exectuableProcess.stdout?.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
