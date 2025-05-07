@@ -49,7 +49,17 @@ await execute(["--version"]);
 await execute(["--config", "path/to/config.json", "--verbose"]);
 ```
 
+## Platform Notes
+
+### macOS
+
+- `.pkg` files are automatically opened using the `open` command, rather than being executed directly. This allows for the standard macOS package installation process.
+
 ## Changelog
+
+### 0.17.0
+
+- `.pkg` files are automatically opened using the `open` command, rather than being executed directly
 
 ### 0.16.0
 

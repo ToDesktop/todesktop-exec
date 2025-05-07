@@ -54,7 +54,15 @@ const execute = async (
     executableOptions.shell = true;
   }
   publish({ type: "debug", data: `Executing with flags: ${flags.join(" ")}` });
-  const exectuableProcess = spawn(executablePath, flags, executableOptions);
+
+  let exectuableProcess: ReturnType<typeof spawn>;
+
+  if (platform === "darwin" && executablePath.endsWith(".pkg")) {
+    publish({ type: "debug", data: `Spawning .pkg with open command` });
+    exectuableProcess = spawn("open", [executablePath]);
+  } else {
+    exectuableProcess = spawn(executablePath, flags, executableOptions);
+  }
 
   exectuableProcess.stdout?.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
