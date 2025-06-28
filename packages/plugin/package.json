@@ -1,6 +1,6 @@
 {
   "name": "@todesktop/plugin-exec",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "",
   "main": "dist/index.js",
   "types": "index.d.ts",
