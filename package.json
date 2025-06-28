@@ -11,9 +11,9 @@
     "test": "jest",
     "dev": "rollup -cw",
     "build": "npm run sync && rollup -c && npm run build --workspace=@todesktop/plugin-exec && npm run build --workspace=@todesktop/client-exec",
-    "release:patch": "rollup -c && npm run release:patch -ws && npm version patch --force",
-    "release:minor": "rollup -c && npm run release:minor -ws && npm version minor --force",
-    "release:major": "rollup -c && npm run release:major -ws && npm version major --force",
+    "release:patch": "npm run sync && rollup -c && npm run release:patch -ws && npm version patch --force",
+    "release:minor": "npm run sync && rollup -c && npm run release:minor -ws && npm version minor --force",
+    "release:major": "npm run sync && rollup -c && npm run release:major -ws && npm version major --force",
     "postinstall": "patch-package",
     "sync": "cp ./README.md ./packages/client/README.md && cp ./README.md ./packages/plugin/README.md"
   },
