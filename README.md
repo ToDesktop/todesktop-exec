@@ -55,7 +55,16 @@ await execute(["--config", "path/to/config.json", "--verbose"]);
 
 - `.pkg` files are automatically opened using the `open` command, rather than being executed directly. This allows for the standard macOS package installation process.
 
+## Process Management
+
+- All spawned processes are automatically tracked and cleaned up when the parent application quits
+- This prevents orphaned processes from running after the ToDesktop app is closed
+
 ## Changelog
+
+### 0.18.0
+
+- Added automatic process cleanup when the parent application quits to prevent orphaned processes
 
 ### 0.17.0
 

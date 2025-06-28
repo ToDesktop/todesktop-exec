@@ -7,6 +7,9 @@ import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
 import { app } from "electron";
 
+// Track all spawned processes to clean them up on app quit
+const activeProcesses: ReturnType<typeof spawn>[] = [];
+
 ipcMain.handle(channels.execute, async (event, flags: string[]) => {
   publish({ type: "debug", data: `Executing @todesktop/exec` });
   const { appOptions, plugin } = getStore();
@@ -64,6 +67,9 @@ const execute = async (
     exectuableProcess = spawn(executablePath, flags, executableOptions);
   }
 
+  // Track the process for cleanup on app quit
+  activeProcesses.push(exectuableProcess);
+
   exectuableProcess.stdout?.on("data", (data) => {
     publish({ type: "stdout", data: data.toString("utf8") });
   });
@@ -79,6 +85,12 @@ const execute = async (
       publish({ type: "debug", data: `Process killed with signal ${signal}` });
     } else {
       publish({ type: "debug", data: "Process exited okay" });
+    }
+    
+    // Remove from active processes list
+    const index = activeProcesses.indexOf(exectuableProcess);
+    if (index > -1) {
+      activeProcesses.splice(index, 1);
     }
   });
 };
@@ -137,6 +149,20 @@ function publish(data: IpcMessage) {
     return { windowId: window.id, viewsIds };
   });
 }
+
+// Clean up all active processes when the app is about to quit
+app.on("before-quit", () => {
+  publish({ type: "debug", data: `Killing ${activeProcesses.length} active processes` });
+  
+  activeProcesses.forEach((process) => {
+    if (!process.killed) {
+      process.kill();
+    }
+  });
+  
+  // Clear the array
+  activeProcesses.length = 0;
+});
 
 /**
  * entrypoint
