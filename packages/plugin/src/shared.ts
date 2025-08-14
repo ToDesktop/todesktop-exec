@@ -3,6 +3,7 @@ export const namespace = (str: string) => `exec:${str}`;
 export const channels = {
   execute: namespace("execute"),
   message: namespace("message"),
+  terminateAll: namespace("terminateAll"),
 };
 
 export type IpcMessage = {
@@ -16,6 +17,14 @@ export type Subscribe = <T extends IpcMessage>(
 
 export type Unsubscribe = (subscriberId: number) => void;
 export type Execute = (flags: string[]) => Promise<void>;
+
+export interface TerminateResult {
+  terminated: number;
+  failed: number;
+  errors: string[];
+}
+
+export type TerminateAllProcesses = () => Promise<TerminateResult>;
 
 export interface PluginContext {
   plugin: {

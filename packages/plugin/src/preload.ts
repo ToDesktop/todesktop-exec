@@ -1,8 +1,11 @@
 import { IpcRendererEvent, ipcRenderer } from "electron";
-import { Execute, Subscribe, Unsubscribe, channels } from "./shared";
+import { Execute, Subscribe, Unsubscribe, TerminateAllProcesses, channels } from "./shared";
 
 export const execute: Execute = (...args) =>
   ipcRenderer.invoke(channels.execute, ...args);
+
+export const terminateAllProcesses: TerminateAllProcesses = () =>
+  ipcRenderer.invoke(channels.terminateAll);
 
 export const subscribe: Subscribe = (onMessage) => {
   const subscriberId = idCount++;
@@ -35,6 +38,7 @@ declare global {
     todesktop: {
       exec: {
         execute: Execute;
+        terminateAllProcesses: TerminateAllProcesses;
         subscribe: Subscribe;
       };
     };

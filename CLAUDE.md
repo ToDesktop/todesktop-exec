@@ -13,10 +13,11 @@ ToDesktop Exec is a monorepo containing an Electron plugin system that allows To
 
 The system uses Electron's IPC (Inter-Process Communication) to safely execute bundled executables:
 
-1. **Client Layer** (`packages/client/src/index.ts`): Exposes `execute()` and `subscribe()` functions to the renderer process
+1. **Client Layer** (`packages/client/src/index.ts`): Exposes `execute()`, `terminateAllProcesses()`, and `subscribe()` functions to the renderer process
 2. **Preload Layer** (`packages/plugin/src/preload.ts`): Bridges renderer and main process via `window.todesktop.exec`
-3. **Main Process Layer** (`packages/plugin/src/main.ts`): Handles actual executable spawning, file extraction, and platform-specific logic
-4. **Shared Types** (`packages/plugin/src/shared.ts`): Common interfaces and IPC channel definitions
+3. **Main Process Layer** (`packages/plugin/src/main.ts`): Handles Electron IPC and app lifecycle events
+4. **Process Manager** (`packages/plugin/src/process-manager.ts`): Core business logic for process spawning, termination, and tracking
+5. **Shared Types** (`packages/plugin/src/shared.ts`): Common interfaces and IPC channel definitions
 
 ### Key Components
 
@@ -24,6 +25,7 @@ The system uses Electron's IPC (Inter-Process Communication) to safely execute b
 - **ASAR extraction**: Executables are extracted from the app bundle to temp directory before execution
 - **Command-line flag support**: Both packages support passing arguments to executables
 - **Real-time logging**: Subscribe to `debug`, `stdout`, and `stderr` streams
+- **Process management**: Automatic cleanup on app quit, manual termination via `terminateAllProcesses()` with proper verification
 
 ## Development Commands
 
@@ -56,6 +58,8 @@ Uses Rollup for bundling with three separate configurations:
 ## Testing
 
 - Uses Jest with TypeScript support (`ts-jest` preset)
+- Tests use real processes (not mocks) to verify actual system behavior
+- Business logic extracted to `process-manager.ts` for testability
 - Configuration in `jest.config.js`
 - Test command: `npm test`
 

@@ -1,14 +1,12 @@
-import { spawn } from "child_process";
 import { BrowserWindow, ipcMain } from "electron";
-import fs from "fs/promises";
 import os from "os";
-import upath from "upath";
 import { IpcMessage, PluginContext, channels } from "./shared";
 import { getStore, setStore } from "./store";
 import { app } from "electron";
+import { activeProcesses, terminateProcesses, executeProcess, getExecutablePath } from "./process-manager";
 
-// Track all spawned processes to clean them up on app quit
-const activeProcesses: ReturnType<typeof spawn>[] = [];
+// Track if we're already cleaning up to prevent infinite loops
+let isCleaningUp = false;
 
 ipcMain.handle(channels.execute, async (event, flags: string[]) => {
   publish({ type: "debug", data: `Executing @todesktop/exec` });
@@ -31,6 +29,17 @@ ipcMain.handle(channels.execute, async (event, flags: string[]) => {
   }
 });
 
+ipcMain.handle(channels.terminateAll, async () => {
+  const processCount = activeProcesses.length;
+  publish({ type: "debug", data: `Terminating ${processCount} active processes` });
+  
+  const result = await terminateProcesses([...activeProcesses], 5000, publish);
+  
+  publish({ type: "debug", data: `Termination complete: ${result.terminated} terminated, ${result.failed} failed` });
+  
+  return result;
+});
+
 const platform = os.platform();
 const execute = async (
   url: string,
@@ -49,90 +58,16 @@ const execute = async (
     data: `Retrieved reference to asset ${asset.name}`,
   });
 
-  const executablePath = await getExecutablePath(asset.relativeLocalPath);
+  const executablePath = await getExecutablePath(
+    asset.relativeLocalPath,
+    app.getAppPath(),
+    app.getPath("temp"),
+    publish
+  );
 
-  publish({ type: "debug", data: `Spawning process at ${executablePath}` });
-  const executableOptions: Parameters<typeof spawn>[2] = {};
-  if (platform === "win32") {
-    executableOptions.shell = true;
-  }
-  publish({ type: "debug", data: `Executing with flags: ${flags.join(" ")}` });
-
-  let exectuableProcess: ReturnType<typeof spawn>;
-
-  if (platform === "darwin" && executablePath.endsWith(".pkg")) {
-    publish({ type: "debug", data: `Spawning .pkg with open command` });
-    exectuableProcess = spawn("open", [executablePath]);
-  } else {
-    exectuableProcess = spawn(executablePath, flags, executableOptions);
-  }
-
-  // Track the process for cleanup on app quit
-  activeProcesses.push(exectuableProcess);
-
-  exectuableProcess.stdout?.on("data", (data) => {
-    publish({ type: "stdout", data: data.toString("utf8") });
-  });
-
-  exectuableProcess.stderr?.on("data", (data) => {
-    publish({ type: "stderr", data: data.toString("utf8") });
-  });
-
-  exectuableProcess.once("exit", (code, signal) => {
-    if (code) {
-      publish({ type: "debug", data: `Process exited with code ${code}` });
-    } else if (signal) {
-      publish({ type: "debug", data: `Process killed with signal ${signal}` });
-    } else {
-      publish({ type: "debug", data: "Process exited okay" });
-    }
-    
-    // Remove from active processes list
-    const index = activeProcesses.indexOf(exectuableProcess);
-    if (index > -1) {
-      activeProcesses.splice(index, 1);
-    }
-  });
+  await executeProcess(executablePath, flags, {}, publish);
 };
 
-async function getExecutablePath(localPath: string) {
-  // Define the path to the executable inside the ASAR archive
-  const asarPath = upath.join(app.getAppPath(), localPath);
-  publish({ type: "debug", data: `Extracting asset from ${asarPath}` });
-
-  // Define a path to copy the executable outside of the ASAR
-  const tempExecutablePath = upath.join(app.getPath("temp"), localPath);
-
-  // Read the file from the ASAR archive
-  const data = await fs.readFile(asarPath);
-
-  // Write the file outside of the ASAR archive
-  const parentDir = getParentDirectory(tempExecutablePath);
-  try {
-    await fs.stat(parentDir);
-  } catch {
-    await fs.mkdir(parentDir, { recursive: true });
-  }
-
-  await fs.writeFile(tempExecutablePath, data);
-  publish({ type: "debug", data: `Writing asset to ${tempExecutablePath}` });
-
-  // Make the file executable (This is especially needed for non-Windows platforms)
-  await fs.chmod(tempExecutablePath, 0o755);
-  publish({ type: "debug", data: `Updated asset execution permissions` });
-
-  return tempExecutablePath;
-}
-
-function getParentDirectory(pathname: string) {
-  const parts = pathname.split(upath.posix.sep);
-
-  // Remove the last part (the executable file)
-  parts.pop();
-
-  // Join the remaining parts to get the parent directory
-  return parts.join(upath.posix.sep);
-}
 
 function publish(data: IpcMessage) {
   const windows = BrowserWindow.getAllWindows();
@@ -151,17 +86,29 @@ function publish(data: IpcMessage) {
 }
 
 // Clean up all active processes when the app is about to quit
-app.on("before-quit", () => {
-  publish({ type: "debug", data: `Killing ${activeProcesses.length} active processes` });
-  
-  activeProcesses.forEach((process) => {
-    if (!process.killed) {
-      process.kill();
-    }
-  });
-  
-  // Clear the array
-  activeProcesses.length = 0;
+app.on("before-quit", (event) => {
+  if (!isCleaningUp && activeProcesses.length > 0) {
+    event.preventDefault();
+    isCleaningUp = true;
+    
+    publish({ type: "debug", data: `App quitting: terminating ${activeProcesses.length} active processes` });
+    
+    // Use shorter timeout (2 seconds) during app quit
+    terminateProcesses([...activeProcesses], 2000, publish).then((result) => {
+      publish({ type: "debug", data: `Quit cleanup complete: ${result.terminated} terminated, ${result.failed} failed` });
+      
+      if (result.failed > 0) {
+        publish({ type: "debug", data: `Failed to terminate some processes: ${result.errors.join(', ')}` });
+      }
+      
+      // Now actually quit the app
+      app.quit();
+    }).catch((error) => {
+      publish({ type: "debug", data: `Error during quit cleanup: ${error}` });
+      // Still quit even if cleanup failed
+      app.quit();
+    });
+  }
 });
 
 /**
