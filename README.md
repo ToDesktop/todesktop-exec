@@ -16,7 +16,7 @@ Installation of the [plugin](https://www.npmjs.com/package/@todesktop/plugin-exe
 
 ### subscribe
 
-Listen to `debug`, `stdout`, or `stderr` logs from your executable.
+Listen to `debug`, `stdout`, `stderr`, or `exit` events from your executable.
 
 ```js
 import { subscribe } from "@todesktop/client-exec";
@@ -27,10 +27,27 @@ subscribe((message) => {
   } else if (message.type === "stdout") {
     // stdout from executable
   } else if (message.type === "stderr") {
-    // stderr from exectuable
+    // stderr from executable
+  } else if (message.type === "exit") {
+    // process exited - message.code and message.signal available
+    console.log("Process exited with code:", message.code, "signal:", message.signal);
   }
 });
 ```
+
+The `exit` event provides structured data about how the process terminated:
+
+- `message.code`: The exit code (number) if the process exited normally, or `null`
+- `message.signal`: The signal name (e.g., "SIGTERM", "SIGKILL") if the process was killed, or `null`
+
+Common exit scenarios:
+
+| Scenario | code | signal |
+|----------|------|--------|
+| Clean exit | `0` or `null` | `null` |
+| Error exit | Non-zero number | `null` |
+| Terminated by app quit | `null` | `"SIGTERM"` or `"SIGKILL"` |
+| Manual termination | `null` | `"SIGTERM"` or `"SIGKILL"` |
 
 ### execute
 
@@ -98,6 +115,10 @@ if (result.failed > 0) {
 - This prevents orphaned processes from running after the ToDesktop app is closed
 
 ## Changelog
+
+### 0.20.0
+
+- Added `exit` event type to `subscribe()` for listening to process exit events with structured data (`code` and `signal`)
 
 ### 0.19.0
 

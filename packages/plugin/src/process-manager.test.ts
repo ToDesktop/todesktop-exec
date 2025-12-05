@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import path from "path";
-import { terminateProcesses, executeProcess, activeProcesses } from "./process-manager";
+import { terminateProcesses, executeProcess, activeProcesses, PublishFunction } from "./process-manager";
 
 describe("Process Manager", () => {
   afterEach(async () => {
@@ -61,7 +61,7 @@ describe("Process Manager", () => {
       // Track stdout/stderr output
       let stdoutData = "";
       let stderrData = "";
-      const mockPublish = (message: { type: string; data: string }) => {
+      const mockPublish: PublishFunction = (message) => {
         if (message.type === "stdout") {
           stdoutData += message.data;
         } else if (message.type === "stderr") {

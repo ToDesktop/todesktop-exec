@@ -6,10 +6,16 @@ export const channels = {
   terminateAll: namespace("terminateAll"),
 };
 
-export type IpcMessage = {
-  type: "debug" | "stdout" | "stderr";
-  data: string;
-};
+export type IpcMessage =
+  | {
+      type: "debug" | "stdout" | "stderr";
+      data: string;
+    }
+  | {
+      type: "exit";
+      code: number | null;
+      signal: string | null;
+    };
 
 export type Subscribe = <T extends IpcMessage>(
   onMessage: (message: T) => void

@@ -168,7 +168,12 @@ export async function executeProcess(
     } else {
       log("debug", "Process exited okay");
     }
-    
+
+    // Publish exit event with structured data
+    if (publish) {
+      publish({ type: "exit", code, signal: signal ?? null });
+    }
+
     // Remove from active processes list
     const index = activeProcesses.indexOf(executableProcess);
     if (index > -1) {
@@ -186,15 +191,39 @@ export async function getExecutablePath(localPath: string, appPath: string, temp
     }
   };
 
-  // Define the path to the executable inside the ASAR archive
   const asarPath = upath.join(appPath, localPath);
-  log("debug", `Extracting asset from ${asarPath}`);
+  let sourcePath = asarPath;
+
+  const electronProcess = process as NodeJS.Process & { resourcesPath?: string };
+  if (electronProcess.resourcesPath) {
+    const unpackedPath = upath.join(electronProcess.resourcesPath, "app.asar.unpacked", localPath);
+
+    try {
+      const stats = await fs.stat(unpackedPath);
+      if (stats.isFile()) {
+        sourcePath = unpackedPath;
+        log("debug", `Using unpacked asset from ${sourcePath}`);
+      } else {
+        log("debug", `Unpacked asset at ${unpackedPath} is not a file, falling back to ASAR`);
+      }
+    } catch (error) {
+      const typedError = error as NodeJS.ErrnoException;
+      if (!typedError?.code || typedError.code !== "ENOENT") {
+        const message = typedError instanceof Error ? typedError.message : String(typedError);
+        log("debug", `Unable to access unpacked asset at ${unpackedPath}: ${message}`);
+      }
+    }
+  }
+
+  if (sourcePath === asarPath) {
+    log("debug", `Extracting asset from ${sourcePath}`);
+  }
 
   // Define a path to copy the executable outside of the ASAR
   const tempExecutablePath = upath.join(tempPath, localPath);
 
-  // Read the file from the ASAR archive
-  const data = await fs.readFile(asarPath);
+  // Read the file from the resolved source path (ASAR or unpacked directory)
+  const data = await fs.readFile(sourcePath);
 
   // Write the file outside of the ASAR archive
   const parentDir = getParentDirectory(tempExecutablePath);
